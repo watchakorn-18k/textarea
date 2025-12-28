@@ -46,7 +46,9 @@
   }
 </style>
 </style>
+</style>
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/zstd-codec@0.1.4/dist/zstd-codec.min.js"></script>
 <style>
   #toolbar {
     position: fixed;
@@ -105,6 +107,8 @@
     color: #3b82f6;
     background: var(--active-bg, rgba(59, 130, 246, 0.1));
   }
+
+  /* Search Modal Removed */
 
   #preview {
     display: none;
@@ -332,11 +336,27 @@
   }
 
   console.log(
-    "%cGitHub https://github.com/antonmedv/textarea",
+    "%cGitHub https://github.com/watchakorn-18k/textarea",
     "font-size: 16px; border: 1px solid lightblue; border-radius: 12px; padding: 10px 14px; "
   );
 
+  // -- Zstd Compression --
+  let zstdSimple = null;
+  const zstdInitPromise = new Promise((resolve) => {
+      // Initialize Zstd
+      if (window.ZstdCodec) {
+          ZstdCodec.run(zstd => {
+              zstdSimple = new zstd.Simple();
+              //console.log("Zstd Initialized");
+              resolve();
+          });
+      } else {
+          resolve(); // Fallback if script blocked
+      }
+  });
+
   async function load() {
+    await zstdInitPromise; // Wait for Zstd
     try {
       if (location.hash !== "") await set(location.hash);
       else {
@@ -366,6 +386,8 @@
   }
 
   async function save() {
+    // Wait for Zstd (though usually loaded by now)
+    await zstdInitPromise;
     const hash = await get();
     const currentHash = location.hash;
     if (currentHash !== hash) {
@@ -406,6 +428,14 @@
 
   async function compress(string) {
     const byteArray = new TextEncoder().encode(string);
+    
+    // Zstd Compression
+    if (zstdSimple) {
+        const compressed = zstdSimple.compress(byteArray);
+        return new Uint8Array(compressed).toBase64({ alphabet: "base64url" });
+    }
+    
+    // Fallback Deflate
     const stream = new CompressionStream("deflate-raw");
     const writer = stream.writable.getWriter();
     writer.write(byteArray);
@@ -416,6 +446,19 @@
 
   async function decompress(b64) {
     const byteArray = Uint8Array.fromBase64(b64, { alphabet: "base64url" });
+    
+    // Try Zstd
+    if (zstdSimple) {
+        try {
+            const decompressed = zstdSimple.decompress(byteArray);
+            return new TextDecoder().decode(decompressed);
+        } catch (e) {
+            // Not Zstd (Legacy URL or error)
+            // console.warn("Zstd decompression failed, trying raw-deflate", e);
+        }
+    }
+    
+    // Fallback Deflate
     const stream = new DecompressionStream("deflate-raw");
     const writer = stream.writable.getWriter();
     writer.write(byteArray);
