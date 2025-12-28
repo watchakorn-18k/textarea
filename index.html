@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<link rel="manifest" href="manifest.json">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta
+  name="theme-color"
+  content="#ffffff"
+  media="(prefers-color-scheme: light)"
+/>
+<meta
+  name="theme-color"
+  content="#000000"
+  media="(prefers-color-scheme: dark)"
+/>
+<link rel="manifest" href="manifest.json" />
 <title>Textarea</title>
 <style>
   * {
@@ -37,126 +45,430 @@
     overflow-wrap: break-word;
   }
 </style>
-<article contenteditable="plaintext-only" spellcheck></article>
-<script>
-  const article = document.querySelector('article')
-  article.addEventListener('input', debounce(500, save))
-  article.addEventListener('blur', save)
-  addEventListener('DOMContentLoaded', load)
-  addEventListener('hashchange', load)
-  addEventListener('load', () => new MutationObserver(save).observe(article, {attributeFilter: ['style']}))
-  addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-      e.preventDefault()
-      download()
+<style>
+  #toolbar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg, rgba(255, 255, 255, 0.8));
+    backdrop-filter: blur(10px);
+    padding: 6px 6px;
+    border-radius: 12px;
+    display: flex;
+    gap: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border, rgba(0, 0, 0, 0.05));
+    z-index: 100;
+    user-select: none;
+    transition: opacity 0.2s, transform 0.2s;
+    opacity: 0.8;
+  }
+  #toolbar:hover {
+    opacity: 1;
+  }
+  @media (prefers-color-scheme: dark) {
+    #toolbar {
+      --bg: rgba(40, 40, 40, 0.8);
+      --border: rgba(255, 255, 255, 0.1);
     }
-  })
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
+  }
+  #toolbar button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: inherit;
+    display: grid;
+    place-items: center;
+    transition: background 0.1s;
+  }
+  #toolbar button:hover {
+    background: var(--hover, rgba(0, 0, 0, 0.05));
+  }
+  @media (prefers-color-scheme: dark) {
+    #toolbar button:hover {
+      --hover: rgba(255, 255, 255, 0.1);
+    }
+  }
+  #toolbar button.active {
+    color: #3b82f6;
+    background: var(--active-bg, rgba(59, 130, 246, 0.1));
   }
 
-  console.log('%cGitHub https://github.com/antonmedv/textarea', 'font-size: 16px; border: 1px solid lightblue; border-radius: 12px; padding: 10px 14px; ')
+  #preview {
+    display: none;
+    outline: none;
+    padding: 18px max(18px, calc(50vw - 400px));
+    width: 100%;
+    min-height: 100vh;
+    font: 18px / 1.5 system-ui;
+    overflow-wrap: break-word;
+  }
+
+  /* Markdown Styles for Preview */
+  #preview h1 {
+    font-size: 2em;
+    margin: 0.67em 0;
+    font-weight: bold;
+  }
+  #preview h2 {
+    font-size: 1.5em;
+    margin: 0.75em 0;
+    font-weight: bold;
+  }
+  #preview h3 {
+    font-size: 1.17em;
+    margin: 0.83em 0;
+    font-weight: bold;
+  }
+  #preview p {
+    margin: 1em 0;
+  }
+  #preview ul,
+  #preview ol {
+    padding-left: 2em;
+    margin: 1em 0;
+  }
+  #preview pre {
+    background: #f5f5f5;
+    padding: 1em;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1em 0;
+    font-family: monospace;
+  }
+  #preview code {
+    background: #f5f5f5;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+  #preview blockquote {
+    border-left: 4px solid #ddd;
+    margin: 1em 0;
+    padding-left: 1em;
+    color: #666;
+  }
+  #preview a {
+    color: #3b82f6;
+    text-decoration: none;
+  }
+  #preview a:hover {
+    text-decoration: underline;
+  }
+  #preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+  #preview hr {
+    border: 0;
+    border-top: 1px solid #ddd;
+    margin: 2em 0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    #preview pre,
+    #preview code {
+      background: #333;
+    }
+    #preview blockquote {
+      border-color: #444;
+      color: #aaa;
+    }
+    #preview hr {
+      border-color: #444;
+    }
+  }
+</style>
+
+<div id="toolbar">
+  <button onclick="format('**')" title="Bold"><b>B</b></button>
+  <button onclick="format('*')" title="Italic"><i>I</i></button>
+  <button onclick="format('`')" title="Code"><code>&lt;&gt;</code></button>
+  <button onclick="format('# ')" title="Heading"><b>H</b></button>
+  <button onclick="format('[', '](')" title="Link">🔗</button>
+  <div
+    style="width: 1px; background: currentColor; opacity: 0.2; margin: 4px 2px"
+  ></div>
+  <button id="previewBtn" onclick="togglePreview()" title="Preview">👁️</button>
+</div>
+
+<article contenteditable="plaintext-only" spellcheck></article>
+<div id="preview"></div>
+
+<script>
+  const article = document.querySelector("article");
+  const preview = document.getElementById("preview");
+  const previewBtn = document.getElementById("previewBtn");
+
+  article.addEventListener("input", debounce(500, save));
+  article.addEventListener("blur", save);
+  addEventListener("DOMContentLoaded", load);
+  addEventListener("hashchange", load);
+  addEventListener("load", () =>
+    new MutationObserver(save).observe(article, { attributeFilter: ["style"] })
+  );
+  addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+      e.preventDefault();
+      download();
+    }
+  });
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+  }
+
+  console.log(
+    "%cGitHub https://github.com/antonmedv/textarea",
+    "font-size: 16px; border: 1px solid lightblue; border-radius: 12px; padding: 10px 14px; "
+  );
 
   async function load() {
     try {
-      if (location.hash !== '') await set(location.hash)
+      if (location.hash !== "") await set(location.hash);
       else {
-        await set(localStorage.getItem('hash') ?? '')
-        if (article.textContent) history.replaceState({}, '', await get())
-        article.focus()
+        await set(localStorage.getItem("hash") ?? "");
+        if (article.textContent) updateURL();
       }
     } catch (e) {
-      article.textContent = ''
-      article.removeAttribute('style')
-      article.focus()
+      article.textContent = "";
+      article.removeAttribute("style");
     }
-    updateTitle()
+
+    // Check for preview mode in URL query
+    const params = new URLSearchParams(location.search);
+    if (params.has("view")) {
+      if (preview.style.display !== "block") {
+        togglePreview(true);
+      }
+    } else {
+      if (preview.style.display === "block") {
+        togglePreview(false);
+      } else {
+        article.focus();
+      }
+    }
+    updateTitle();
   }
 
   async function save() {
-    const hash = await get()
-    if (location.hash !== hash) history.replaceState({}, '', hash)
-    try { localStorage.setItem('hash', hash) } catch (e) {}
-    updateTitle()
+    const hash = await get();
+    const currentHash = location.hash;
+    if (currentHash !== hash) {
+      updateURL(hash);
+    }
+    try {
+      localStorage.setItem("hash", hash);
+    } catch (e) {}
+    updateTitle();
+  }
+
+  function updateURL(hash) {
+    if (!hash) hash = location.hash || window.savedHash || "#";
+    const url = new URL(location.href);
+    url.hash = hash;
+    history.replaceState({}, "", url.toString());
+    window.savedHash = hash;
   }
 
   async function set(hash) {
-    if (!hash) return
-    const [content, style] = (await decompress(hash.slice(1))).split('\x00')
-    article.textContent = content
-    if (style) article.setAttribute('style', style)
+    if (!hash) return;
+    const [content, style] = (await decompress(hash.slice(1))).split("\x00");
+    article.textContent = content;
+    if (style) article.setAttribute("style", style);
   }
 
   async function get() {
-    const style = article.getAttribute('style')
-    const content = article.textContent + (style !== null ? '\x00' + style : '')
-    return '#' + await compress(content)
+    const style = article.getAttribute("style");
+    const content =
+      article.textContent + (style !== null ? "\x00" + style : "");
+    return "#" + (await compress(content));
   }
 
   function updateTitle() {
-    const match = article.textContent.match(/^\n*#(.+)\n/)
-    document.title = match?.[1] ?? 'Textarea'
+    const match = article.textContent.match(/^\n*#(.+)\n/);
+    document.title = match?.[1] ?? "Textarea";
   }
 
   async function compress(string) {
-    const byteArray = new TextEncoder().encode(string)
-    const stream = new CompressionStream('deflate-raw')
-    const writer = stream.writable.getWriter()
-    writer.write(byteArray)
-    writer.close()
-    const buffer = await new Response(stream.readable).arrayBuffer()
-    return new Uint8Array(buffer).toBase64({alphabet: 'base64url'})
+    const byteArray = new TextEncoder().encode(string);
+    const stream = new CompressionStream("deflate-raw");
+    const writer = stream.writable.getWriter();
+    writer.write(byteArray);
+    writer.close();
+    const buffer = await new Response(stream.readable).arrayBuffer();
+    return new Uint8Array(buffer).toBase64({ alphabet: "base64url" });
   }
 
   async function decompress(b64) {
-    const byteArray = Uint8Array.fromBase64(b64, {alphabet: 'base64url'})
-    const stream = new DecompressionStream('deflate-raw')
-    const writer = stream.writable.getWriter()
-    writer.write(byteArray)
-    writer.close()
-    const buffer = await new Response(stream.readable).arrayBuffer()
-    return new TextDecoder().decode(buffer)
+    const byteArray = Uint8Array.fromBase64(b64, { alphabet: "base64url" });
+    const stream = new DecompressionStream("deflate-raw");
+    const writer = stream.writable.getWriter();
+    writer.write(byteArray);
+    writer.close();
+    const buffer = await new Response(stream.readable).arrayBuffer();
+    return new TextDecoder().decode(buffer);
   }
 
   function debounce(ms, fn) {
-    let timer
+    let timer;
     return (...args) => {
-      clearTimeout(timer)
-      timer = setTimeout(() => fn(...args), ms)
-    }
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), ms);
+    };
   }
 
   async function download() {
-    updateTitle()
-    const doc = document.documentElement.cloneNode(true)
-    doc.querySelectorAll('script').forEach(s => s.remove())
-    doc.querySelector('article').removeAttribute('contenteditable')
-    const html = '<!DOCTYPE html>\n' + doc.outerHTML
+    updateTitle();
+    const doc = document.documentElement.cloneNode(true);
+    doc.querySelectorAll("script").forEach((s) => s.remove());
+    doc.querySelector("article").removeAttribute("contenteditable");
+    const html = "<!DOCTYPE html>\n" + doc.outerHTML;
 
-    if ('showSaveFilePicker' in window) {
+    if ("showSaveFilePicker" in window) {
       try {
         const handle = await showSaveFilePicker({
-          suggestedName: document.title + '.html',
-          types: [{
-            description: 'HTML file',
-            accept: {'text/html': ['.html']},
-          }],
-        })
-        const writable = await handle.createWritable()
-        await writable.write(html)
-        await writable.close()
-        return
+          suggestedName: document.title + ".html",
+          types: [
+            {
+              description: "HTML file",
+              accept: { "text/html": [".html"] },
+            },
+          ],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(html);
+        await writable.close();
+        return;
       } catch (e) {
-        if (e.name === 'AbortError') return
+        if (e.name === "AbortError") return;
       }
     }
 
-    const blob = new Blob([html], {type: 'text/html'})
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = document.title + '.html'
-    a.click()
-    URL.revokeObjectURL(url)
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = document.title + ".html";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // -- New Features --
+
+  function format(prefix, suffix = prefix) {
+    if (preview.style.display === "block") return; // Read-only mode
+    article.focus();
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+
+    const text = sel.toString();
+    // Use execCommand insertText to preserve undo history if possible
+    // Note: execCommand is deprecated but still the standard way for contenteditable undo stack support
+    if (document.queryCommandSupported("insertText")) {
+      let replacement = prefix + text + suffix;
+      // Special case for Heading
+      if (prefix.trim() === "#") {
+        // If multiline, might be tricky, just wrap first line?
+        // For simplicity, just insert. Ideally check if we are at start of line
+      }
+      document.execCommand("insertText", false, replacement);
+    } else {
+      // Fallback
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(prefix + text + suffix));
+    }
+  }
+
+  function togglePreview(forceState) {
+    const isCurrentlyPreview = preview.style.display === "block";
+    const shouldShowPreview =
+      forceState !== undefined ? forceState : !isCurrentlyPreview;
+
+    if (!shouldShowPreview) {
+      // Switch to edit
+      preview.style.display = "none";
+      article.style.display = "block";
+      previewBtn.classList.remove("active");
+      article.focus();
+
+      const url = new URL(location.href);
+      url.searchParams.delete("view");
+      history.replaceState({}, "", url.toString());
+    } else {
+      // Switch to preview
+      const content = article.textContent;
+      preview.innerHTML = parseMarkdown(content);
+      article.style.display = "none";
+      preview.style.display = "block";
+      previewBtn.classList.add("active");
+
+      const url = new URL(location.href);
+      url.searchParams.set("view", "");
+      history.replaceState({}, "", url.toString());
+    }
+  }
+
+  function parseMarkdown(text) {
+    // Simple markdown parser
+    let html = text
+      // Escape HTML
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+
+      // Code blocks (```)
+      .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+
+      // Inline Code (`)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+
+      // Images
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
+
+      // Links
+      .replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener">$1</a>'
+      )
+
+      // Bold
+      .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+      .replace(/__([^_]+)__/g, "<b>$1</b>")
+
+      // Italic
+      .replace(/\*([^*]+)\*/g, "<i>$1</i>")
+      .replace(/_([^_]+)_/g, "<i>$1</i>")
+
+      // Strikethrough
+      .replace(/~~([^~]+)~~/g, "<del>$1</del>")
+
+      // Horizontal Rule
+      .replace(/^---+$/gm, "<hr>")
+
+      // Headers
+      .replace(/^# (.*$)/gm, "<h1>$1</h1>")
+      .replace(/^## (.*$)/gm, "<h2>$1</h2>")
+      .replace(/^### (.*$)/gm, "<h3>$1</h3>")
+
+      // Blockquotes
+      .replace(/^> (.*$)/gm, "<blockquote>$1</blockquote>")
+
+      // Unordered Lists
+      .replace(/^\s*[-*+] (.*$)/gm, "<ul><li>$1</li></ul>")
+      // Fix adjacent lists (naive)
+      .replace(/<\/ul>\s*<ul>/g, "")
+
+      // Line breaks
+      .replace(/\n/g, "<br>");
+
+    return html;
   }
 </script>
