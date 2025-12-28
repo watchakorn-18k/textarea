@@ -221,7 +221,106 @@
   addEventListener("load", () =>
     new MutationObserver(save).observe(article, { attributeFilter: ["style"] })
   );
-  
+
+  // -- Image Handling --
+
+  article.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  article.addEventListener('drop', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleImages(e.dataTransfer.files);
+  });
+
+  article.addEventListener('paste', e => {
+    const files = [];
+    if (e.clipboardData && e.clipboardData.items) {
+      for (const item of e.clipboardData.items) {
+        if (item.type.indexOf('image') !== -1) {
+          files.push(item.getAsFile());
+        }
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault();
+      handleImages(files);
+    }
+  });
+
+  async function handleImages(files) {
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      
+      // Show loading/processing indicator if needed (optional)
+      // For now, simple insert
+      try {
+        const compressedDataUrl = await compressImage(file);
+        insertText(`\n![image](${compressedDataUrl})\n`);
+      } catch (err) {
+        console.error('Image processing failed:', err);
+        alert('Failed to process image.');
+      }
+    }
+    save();
+  }
+
+  function insertText(text) {
+    const sel = window.getSelection();
+    if (sel.rangeCount) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(text));
+      // Move cursor after
+      range.collapse(false);
+    } else {
+      article.textContent += text;
+    }
+    // Update preview if active
+    if (preview.style.display === 'block') {
+      preview.innerHTML = parseMarkdown(article.textContent);
+    }
+  }
+
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = event => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1024; // Limit width to save hash space
+          const scaleSize = MAX_WIDTH / img.width;
+          
+          let width = img.width;
+          let height = img.height;
+
+          if (scaleSize < 1) {
+             width *= scaleSize;
+             height *= scaleSize;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Compress to WebP at 0.7 quality
+          // This mimics Wasm compression efficiency using native browser engine
+          const dataUrl = canvas.toDataURL('image/webp', 0.7);
+          resolve(dataUrl);
+        };
+        img.onerror = err => reject(err);
+      };
+      reader.onerror = err => reject(err);
+    });
+  }
+
   addEventListener("keydown", (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "s") {
       e.preventDefault();
