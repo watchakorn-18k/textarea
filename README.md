@@ -4,16 +4,39 @@ A _minimalist_ text editor that lives entirely in your browser and stores everyt
 
 ## Features
 
-- 🗜️ **Compression** – Your text gets compressed with deflate
-- 🔗 **URL hash** – Share your notes by copying a URL
-- 💕 **Style** – Customize the look with CSS via DevTools
+- � **Markdown** – Write in simple Markdown with a toolbar and instant preview
+- 🖼️ **Images** – Drag & drop or paste images directly (auto-compressed)
+- 🗜️ **Compression** – Smart compression (Zstd/Deflate) keeps URLs as short as possible
+- � **Offline Ready** – Works entirely offline as a Progressive Web App (PWA)
+- �🔗 **URL hash** – No servers. Your data lives in the URL and LocalStorage
+- 💕 **Style** – Customize the look with CSS via DevTools (changes are saved!)
 
 ## Pro tips
 
-- Start your document with `# Title` to set a custom page title
-- Your data lives in localStorage AND the URL. Double the fun!
-- Add a `style` attribute to the `<article>` tag via DevTools. It'll be saved in the URL too!
-- Add [`/qr`](https://textarea.my/qr#c0_NSy1KLElVSFQIDFJIzk9JVUjLL1KozC8tUsjLL0ktVgQA) to get a QR code for the current page
+- **Save as HTML**: Press `Ctrl/Cmd + S` to save your note as a standalone HTML file
+- **Read-Only Link**: Click the "Eye" icon or add `?view` to the URL to share a non-editable version
+- **Custom Title**: The first line `# My Title` becomes the page title and filename
+- **Embed Images**: Paste images from clipboard – they get compressed and stored in the URL
+- **QR Code**: Add [`/qr`](https://textarea.my/qr#c0_NSy1KLElVSFQIDFJIzk9JVUjLL1KozC8tUsjLL0ktVgQA) to the end of the URL (before the hash) to get a QR code
+
+## Docker
+
+You can host your own instance using Docker.
+
+### Using Docker Compose
+
+```bash
+docker-compose up -d
+```
+
+### Manual Build
+
+```bash
+docker build -t textarea .
+docker run -d -p 8080:80 textarea
+```
+
+The application will be available at http://localhost:8080
 
 ## Examples
 
