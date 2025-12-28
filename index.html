@@ -45,6 +45,8 @@
     overflow-wrap: break-word;
   }
 </style>
+</style>
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
   #toolbar {
     position: fixed;
@@ -76,7 +78,6 @@
   #toolbar button {
     background: none;
     border: none;
-    font-size: 16px;
     cursor: pointer;
     width: 36px;
     height: 36px;
@@ -85,6 +86,12 @@
     display: grid;
     place-items: center;
     transition: background 0.1s;
+    padding: 0;
+  }
+  #toolbar button .lucide {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2px;
   }
   #toolbar button:hover {
     background: var(--hover, rgba(0, 0, 0, 0.05));
@@ -188,15 +195,15 @@
 </style>
 
 <div id="toolbar">
-  <button onclick="format('**')" title="Bold"><b>B</b></button>
-  <button onclick="format('*')" title="Italic"><i>I</i></button>
-  <button onclick="format('`')" title="Code"><code>&lt;&gt;</code></button>
-  <button onclick="format('# ')" title="Heading"><b>H</b></button>
-  <button onclick="format('[', '](')" title="Link">🔗</button>
+  <button onclick="format('**')" title="Bold"><i data-lucide="bold"></i></button>
+  <button onclick="format('*')" title="Italic"><i data-lucide="italic"></i></button>
+  <button onclick="format('`')" title="Code"><i data-lucide="code"></i></button>
+  <button onclick="format('# ')" title="Heading"><i data-lucide="heading"></i></button>
+  <button onclick="format('[', '](')" title="Link"><i data-lucide="link"></i></button>
   <div
     style="width: 1px; background: currentColor; opacity: 0.2; margin: 4px 2px"
   ></div>
-  <button id="previewBtn" onclick="togglePreview()" title="Preview">👁️</button>
+  <button id="previewBtn" onclick="togglePreview()" title="Preview"><i data-lucide="eye"></i></button>
 </div>
 
 <article contenteditable="plaintext-only" spellcheck></article>
@@ -214,6 +221,7 @@
   addEventListener("load", () =>
     new MutationObserver(save).observe(article, { attributeFilter: ["style"] })
   );
+  
   addEventListener("keydown", (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "s") {
       e.preventDefault();
@@ -255,6 +263,7 @@
       }
     }
     updateTitle();
+    lucide.createIcons();
   }
 
   async function save() {
