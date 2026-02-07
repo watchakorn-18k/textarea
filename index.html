@@ -183,6 +183,44 @@
     font: 18px / 1.5 system-ui;
     overflow-wrap: break-word;
   }
+
+  /* Split View */
+  body.split-view {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+  body.split-view article {
+    width: calc(50% - 1px);
+    min-height: 100vh;
+    padding: 18px;
+  }
+  body.split-view #preview {
+    display: block;
+    width: calc(50% - 1px);
+    min-height: 100vh;
+    padding: 18px;
+    overflow-y: auto;
+    border-left: 2px solid var(--border, rgba(0, 0, 0, 0.15));
+  }
+  @media (prefers-color-scheme: dark) {
+    body.split-view #preview {
+      border-left-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+  @media (max-width: 768px) {
+    body.split-view article,
+    body.split-view #preview {
+      width: 100%;
+    }
+    body.split-view {
+      flex-direction: column;
+    }
+  }
+  #splitBtn.active {
+    color: #3b82f6;
+    background: var(--active-bg, rgba(59, 130, 246, 0.1));
+  }
   #preview h1 {
     font-size: 2em;
     margin: 0.67em 0;
@@ -638,6 +676,9 @@
   <button id="previewBtn" onclick="togglePreview()" title="Preview">
     <i data-lucide="eye"></i>
   </button>
+  <button id="splitBtn" onclick="toggleSplitView()" title="Split View">
+    <i data-lucide="columns"></i>
+  </button>
 </div>
 
 <!-- FAB Button -->
@@ -750,6 +791,24 @@
     </svg>
     Save as TEXT
   </button>
+  <button class="item" id="import-file" role="menuitem">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+      <path d="M5 13v-8a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5.5" />
+      <path d="M9 19h6" />
+      <path d="M12 16v6" />
+      <path d="M12 13l-3 3l3 3" />
+    </svg>
+    Import file
+  </button>
   <a
     class="item"
     href="https://github.com/watchakorn-18k/textarea"
@@ -816,6 +875,10 @@
   article.addEventListener("input", (e) => {
     debounce(500, save)();
     updateStats();
+    // Update preview in real-time for split view
+    if (isSplitView) {
+      preview.innerHTML = parseMarkdown(article.textContent);
+    }
   });
   article.addEventListener("blur", save);
   article.addEventListener("click", (event) => {
@@ -823,15 +886,22 @@
       window.open(event.target.getAttribute("href"), "_blank");
   });
 
-  // Image handling
+  // Drag & drop handling (images + text files)
   article.addEventListener("dragover", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    article.style.boxShadow = "inset 0 0 0 3px #3b82f6";
+  });
+  article.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    article.style.boxShadow = "";
   });
   article.addEventListener("drop", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    handleImages(e.dataTransfer.files);
+    article.style.boxShadow = "";
+    handleDrop(e.dataTransfer.files);
   });
   article.addEventListener("paste", (e) => {
     const files = [];
@@ -900,8 +970,42 @@
     }
   });
 
-  // -- Image Handling --
-  async function handleImages(files) {
+  // -- File Drop Handling --
+  async function handleDrop(files) {
+    for (const file of files) {
+      if (file.type.startsWith("image/")) {
+        await handleImageFile(file);
+      } else if (file.type === "text/plain" || 
+                 file.type === "text/markdown" ||
+                 file.name.endsWith(".md") ||
+                 file.name.endsWith(".txt") ||
+                 file.name.endsWith(".markdown")) {
+        await handleTextFile(file);
+      }
+    }
+  }
+
+  async function handleTextFile(file) {
+    try {
+      const text = await file.text();
+      // Confirm if content exists
+      if (article.textContent.trim() && !confirm("Replace current content with imported file?")) {
+        return;
+      }
+      editor.set(text);
+      save();
+      // Update preview if in split view
+      if (isSplitView) {
+        preview.innerHTML = parseMarkdown(text);
+      }
+      notify(`Imported: ${file.name}`);
+    } catch (err) {
+      console.error("Failed to read file:", err);
+      notify("Failed to import file");
+    }
+  }
+
+  async function handleImageFile(file) {
     for (const file of files) {
       if (!file.type.startsWith("image/")) continue;
       try {
@@ -975,9 +1079,11 @@
       article.removeAttribute("style");
     }
 
-    // Check for preview mode in URL query
+    // Check for preview mode or split view in URL query
     const params = new URLSearchParams(location.search);
-    if (params.has("view")) {
+    if (params.has("split")) {
+      toggleSplitView();
+    } else if (params.has("view")) {
       if (preview.style.display !== "block") {
         togglePreview(true);
       }
@@ -1402,8 +1508,47 @@
     save();
   }
 
+  let isSplitView = false;
+
+  function toggleSplitView() {
+    const splitBtn = document.getElementById("splitBtn");
+    const previewBtn = document.getElementById("previewBtn");
+    
+    isSplitView = !isSplitView;
+    
+    if (isSplitView) {
+      document.body.classList.add("split-view");
+      splitBtn.classList.add("active");
+      previewBtn.classList.remove("active");
+      
+      // Make sure article is visible for split view
+      article.style.display = "block";
+      
+      // Force update preview content immediately
+      setTimeout(() => {
+        preview.innerHTML = parseMarkdown(article.textContent);
+      }, 0);
+      
+      // Update URL
+      const url = new URL(location.href);
+      url.searchParams.set("split", "");
+      url.searchParams.delete("view");
+      history.replaceState({}, "", url.toString());
+    } else {
+      document.body.classList.remove("split-view");
+      splitBtn.classList.remove("active");
+      preview.style.display = "none";
+      article.style.display = "block";
+      article.style.width = "";
+      
+      const url = new URL(location.href);
+      url.searchParams.delete("split");
+      history.replaceState({}, "", url.toString());
+    }
+  }
+
   function togglePreview(forceState) {
-    const isCurrentlyPreview = preview.style.display === "block";
+    const isCurrentlyPreview = preview.style.display === "block" && !isSplitView;
     const shouldShowPreview =
       forceState !== undefined ? forceState : !isCurrentlyPreview;
 
@@ -1416,6 +1561,10 @@
       url.searchParams.delete("view");
       history.replaceState({}, "", url.toString());
     } else {
+      // Turn off split view if active
+      if (isSplitView) {
+        toggleSplitView();
+      }
       const content = article.textContent;
       preview.innerHTML = parseMarkdown(content);
       article.style.display = "none";
@@ -1423,6 +1572,7 @@
       previewBtn.classList.add("active");
       const url = new URL(location.href);
       url.searchParams.set("view", "");
+      url.searchParams.delete("split");
       history.replaceState({}, "", url.toString());
     }
   }
@@ -1614,6 +1764,19 @@
     const shareLink = document.querySelector("#share-link");
     const saveAsHTML = document.querySelector("#save-as-html");
     const saveAsText = document.querySelector("#save-as-text");
+    const importFile = document.querySelector("#import-file");
+
+    // Create hidden file input for import
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".md,.txt,.markdown,text/plain,text/markdown";
+    fileInput.style.display = "none";
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+        handleDrop(e.target.files);
+      }
+    });
+    document.body.appendChild(fileInput);
 
     fab.addEventListener("click", (event) => {
       if (event.clientX || event.targetTouches) ripple(event);
@@ -1658,6 +1821,11 @@
     saveAsText.addEventListener("click", (event) => {
       event.preventDefault();
       downloadTXT();
+      hideMenu();
+    });
+    importFile.addEventListener("click", (event) => {
+      event.preventDefault();
+      fileInput.click();
       hideMenu();
     });
   }
