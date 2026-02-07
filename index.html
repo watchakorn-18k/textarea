@@ -236,6 +236,26 @@
     height: auto;
     border-radius: 8px;
   }
+  #preview .task-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  #preview .task-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0.3em 0;
+  }
+  #preview .task-list input[type="checkbox"] {
+    margin-top: 4px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+  }
+  #preview .task-list input[type="checkbox"]:disabled {
+    cursor: default;
+  }
   #preview hr {
     border: 0;
     border-top: 1px solid #ddd;
@@ -449,6 +469,138 @@
     visibility: visible;
   }
 
+  /* Find & Replace */
+  #findReplace {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--elevated);
+    backdrop-filter: blur(10px);
+    padding: 40px 16px 16px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 280px;
+  }
+  #findReplace.visible {
+    display: flex;
+  }
+  #findReplace input {
+    background: var(--bg, #f5f5f5);
+    border: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+    border-radius: 8px;
+    padding: 8px 12px;
+    font: 14px / 1.4 system-ui;
+    color: var(--text);
+    outline: none;
+  }
+  #findReplace input:focus {
+    border-color: var(--outline, #007aff);
+  }
+  #findReplace .row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  #findReplace .buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  #findReplace button {
+    background: var(--bg, #f0f0f0);
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font: 13px / 1 system-ui;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  #findReplace button:hover {
+    background: var(--hover, #e0e0e0);
+  }
+  #findReplace button.primary {
+    background: #3b82f6;
+    color: white;
+  }
+  #findReplace button.primary:hover {
+    background: #2563eb;
+  }
+  #findReplace .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--bg, rgba(0, 0, 0, 0.05));
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--text);
+    opacity: 0.7;
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+  }
+  #findReplace .close:hover {
+    opacity: 1;
+    background: var(--hover, rgba(0, 0, 0, 0.1));
+  }
+  @media (prefers-color-scheme: dark) {
+    #findReplace .close {
+      --bg: rgba(255, 255, 255, 0.1);
+      --hover: rgba(255, 255, 255, 0.2);
+    }
+  }
+  #findReplace .stats {
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.6;
+    text-align: center;
+  }
+  #findReplace .match-case {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  #findReplace .match-case input {
+    width: auto;
+  }
+  @media (prefers-color-scheme: dark) {
+    #findReplace {
+      --bg: #2a2a2a;
+      --border: rgba(255, 255, 255, 0.1);
+      --hover: #3a3a3a;
+    }
+  }
+  @media (max-width: 600px) {
+    #findReplace {
+      right: 10px;
+      left: 10px;
+      min-width: auto;
+    }
+  }
+
+  /* Find highlight */
+  .find-highlight {
+    background: rgba(255, 215, 0, 0.4);
+    border-radius: 2px;
+  }
+  .find-current {
+    background: rgba(255, 165, 0, 0.6);
+    border-radius: 2px;
+  }
+
   @media print {
     .noprint {
       visibility: hidden !important;
@@ -473,6 +625,9 @@
   </button>
   <button onclick="format('[', '](')" title="Link">
     <i data-lucide="link"></i>
+  </button>
+  <button onclick="insertCheckbox()" title="Checkbox">
+    <i data-lucide="check-square"></i>
   </button>
   <div
     style="width: 1px; background: currentColor; opacity: 0.2; margin: 4px 2px"
@@ -620,6 +775,25 @@
     <span id="wordCount">0 words</span>
   </div>
 
+<!-- Find & Replace -->
+<div id="findReplace" class="noprint">
+  <button class="close" onclick="closeFindReplace()" title="Close (Esc)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+  </button>
+  <input type="text" id="findInput" placeholder="Find..." oninput="updateFind()">
+  <input type="text" id="replaceInput" placeholder="Replace with...">
+  <label class="match-case">
+    <input type="checkbox" id="matchCase"> Match case
+  </label>
+  <div class="stats" id="findStats"></div>
+  <div class="buttons">
+    <button onclick="findPrev()">↑ Previous</button>
+    <button onclick="findNext()">↓ Next</button>
+    <button onclick="replaceOne()">Replace</button>
+    <button class="primary" onclick="replaceAll()">Replace All</button>
+  </div>
+</div>
+
 <div id="notification" class="noprint"></div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -674,6 +848,7 @@
   addEventListener("DOMContentLoaded", () => {
     load();
     updateStats();
+    document.getElementById("matchCase")?.addEventListener("change", updateFind);
   });
   addEventListener("hashchange", load);
   addEventListener("load", () =>
@@ -683,6 +858,20 @@
     if ((e.metaKey || e.ctrlKey) && e.code === "KeyS") {
       e.preventDefault();
       downloadHTML();
+    }
+    // Ctrl+F = Find
+    if ((e.metaKey || e.ctrlKey) && e.code === "KeyF") {
+      e.preventDefault();
+      openFindReplace(false);
+    }
+    // Ctrl+H = Find & Replace
+    if ((e.metaKey || e.ctrlKey) && e.code === "KeyH") {
+      e.preventDefault();
+      openFindReplace(true);
+    }
+    // Esc = Close Find & Replace
+    if (e.code === "Escape") {
+      closeFindReplace();
     }
   });
 
@@ -851,6 +1040,251 @@
       wordCount.toLocaleString() + " word" + (wordCount !== 1 ? "s" : "");
   }
 
+  // -- Find & Replace --
+  let findMatches = [];
+  let currentMatchIndex = -1;
+  let savedSelection = null;
+
+  function openFindReplace(showReplace) {
+    const panel = document.getElementById("findReplace");
+    const findInput = document.getElementById("findInput");
+    const replaceInput = document.getElementById("replaceInput");
+    
+    panel.classList.add("visible");
+    findInput.focus();
+    findInput.select();
+    
+    // Save current selection
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      savedSelection = sel.getRangeAt(0).cloneRange();
+      // Pre-fill with selected text
+      const selectedText = sel.toString();
+      if (selectedText && !findInput.value) {
+        findInput.value = selectedText;
+        updateFind();
+      }
+    }
+  }
+
+  function closeFindReplace() {
+    const panel = document.getElementById("findReplace");
+    panel.classList.remove("visible");
+    clearHighlights();
+    findMatches = [];
+    currentMatchIndex = -1;
+    article.focus();
+  }
+
+  function clearHighlights() {
+    const highlights = article.querySelectorAll(".find-highlight, .find-current");
+    highlights.forEach(el => {
+      const parent = el.parentNode;
+      parent.replaceChild(document.createTextNode(el.textContent), el);
+      parent.normalize();
+    });
+  }
+
+  function updateFind() {
+    clearHighlights();
+    findMatches = [];
+    currentMatchIndex = -1;
+    
+    const findText = document.getElementById("findInput").value;
+    if (!findText) {
+      updateFindStats();
+      return;
+    }
+
+    const matchCase = document.getElementById("matchCase").checked;
+    const text = article.textContent;
+    
+    // Build regex
+    const flags = matchCase ? "g" : "gi";
+    const escaped = findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, flags);
+    
+    // Find all matches
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      findMatches.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        text: match[0]
+      });
+    }
+
+    highlightMatches();
+    updateFindStats();
+    
+    if (findMatches.length > 0) {
+      currentMatchIndex = 0;
+      highlightCurrent();
+      scrollToMatch();
+    }
+  }
+
+  function highlightMatches() {
+    if (findMatches.length === 0) return;
+    
+    // Get all text nodes
+    const walker = document.createTreeWalker(
+      article,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+    
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node);
+    }
+
+    // Process each match
+    let currentPos = 0;
+    let matchIndex = 0;
+    let nodeIndex = 0;
+    
+    while (matchIndex < findMatches.length && nodeIndex < textNodes.length) {
+      const node = textNodes[nodeIndex];
+      const nodeLength = node.textContent.length;
+      const match = findMatches[matchIndex];
+      
+      if (currentPos + nodeLength <= match.start) {
+        currentPos += nodeLength;
+        nodeIndex++;
+      } else if (currentPos >= match.end) {
+        matchIndex++;
+      } else {
+        // Match starts or ends in this node
+        const matchStartInNode = Math.max(0, match.start - currentPos);
+        const matchEndInNode = Math.min(nodeLength, match.end - currentPos);
+        
+        const before = node.textContent.substring(0, matchStartInNode);
+        const matchText = node.textContent.substring(matchStartInNode, matchEndInNode);
+        const after = node.textContent.substring(matchEndInNode);
+        
+        const span = document.createElement("span");
+        span.className = "find-highlight";
+        span.dataset.matchIndex = matchIndex;
+        span.textContent = matchText;
+        
+        const parent = node.parentNode;
+        if (before) parent.insertBefore(document.createTextNode(before), node);
+        parent.insertBefore(span, node);
+        if (after) parent.insertBefore(document.createTextNode(after), node);
+        parent.removeChild(node);
+        
+        matchIndex++;
+      }
+    }
+  }
+
+  function highlightCurrent() {
+    const prev = article.querySelector(".find-current");
+    if (prev) {
+      prev.classList.remove("find-current");
+      prev.classList.add("find-highlight");
+    }
+    
+    const current = article.querySelector(`[data-match-index="${currentMatchIndex}"]`);
+    if (current) {
+      current.classList.remove("find-highlight");
+      current.classList.add("find-current");
+    }
+    updateFindStats();
+  }
+
+  function scrollToMatch() {
+    const current = article.querySelector(".find-current");
+    if (current) {
+      current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  function updateFindStats() {
+    const stats = document.getElementById("findStats");
+    if (findMatches.length === 0) {
+      const findText = document.getElementById("findInput").value;
+      stats.textContent = findText ? "No matches" : "";
+    } else {
+      stats.textContent = `${currentMatchIndex + 1} of ${findMatches.length}`;
+    }
+  }
+
+  function findNext() {
+    if (findMatches.length === 0) return;
+    currentMatchIndex = (currentMatchIndex + 1) % findMatches.length;
+    highlightCurrent();
+    scrollToMatch();
+  }
+
+  function findPrev() {
+    if (findMatches.length === 0) return;
+    currentMatchIndex = (currentMatchIndex - 1 + findMatches.length) % findMatches.length;
+    highlightCurrent();
+    scrollToMatch();
+  }
+
+  function replaceOne() {
+    if (findMatches.length === 0 || currentMatchIndex < 0) return;
+    
+    const replaceText = document.getElementById("replaceInput").value;
+    const current = article.querySelector(".find-current");
+    
+    if (current) {
+      const textNode = document.createTextNode(replaceText);
+      current.parentNode.replaceChild(textNode, current);
+      textNode.parentNode.normalize();
+      
+      // Update matches
+      findMatches.splice(currentMatchIndex, 1);
+      
+      // Re-highlight remaining
+      clearHighlights();
+      highlightMatches();
+      
+      if (findMatches.length > 0) {
+        if (currentMatchIndex >= findMatches.length) {
+          currentMatchIndex = 0;
+        }
+        highlightCurrent();
+      } else {
+        currentMatchIndex = -1;
+      }
+      updateFindStats();
+      save();
+    }
+  }
+
+  function replaceAll() {
+    const findText = document.getElementById("findInput").value;
+    const replaceText = document.getElementById("replaceInput").value;
+    if (!findText) return;
+    
+    const matchCase = document.getElementById("matchCase").checked;
+    const flags = matchCase ? "g" : "gi";
+    const escaped = findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, flags);
+    
+    // Get current content as text
+    const content = article.textContent;
+    const newContent = content.replace(regex, replaceText);
+    
+    if (content !== newContent) {
+      editor.set(newContent);
+      findMatches = [];
+      currentMatchIndex = -1;
+      updateFindStats();
+      save();
+      notify(`Replaced ${(content.match(regex) || []).length} occurrence(s)`);
+    }
+  }
+
+  // Update find when match case changes
+  document.getElementById("matchCase")?.addEventListener("change", updateFind);
+
   async function compress(string) {
     const byteArray = new TextEncoder().encode(string);
     if (zstdSimple) {
@@ -908,6 +1342,25 @@
     }
   }
 
+  function insertCheckbox() {
+    if (preview.style.display === "block") return;
+    const checkbox = "- [ ] ";
+    article.focus();
+    const sel = window.getSelection();
+    if (document.queryCommandSupported("insertText")) {
+      document.execCommand("insertText", false, checkbox);
+    } else {
+      const range = sel.rangeCount ? sel.getRangeAt(0) : null;
+      if (range) {
+        range.deleteContents();
+        range.insertNode(document.createTextNode(checkbox));
+      } else {
+        article.textContent += checkbox;
+      }
+    }
+    save();
+  }
+
   function togglePreview(forceState) {
     const isCurrentlyPreview = preview.style.display === "block";
     const shouldShowPreview =
@@ -955,6 +1408,7 @@
       .replace(/^## (.*$)/gm, "<h2>$1</h2>")
       .replace(/^### (.*$)/gm, "<h3>$1</h3>")
       .replace(/^> (.*$)/gm, "<blockquote>$1</blockquote>")
+      .replace(/^\s*- \[([ xX])\] (.*$)/gm, '<ul class="task-list"><li><input type="checkbox" $1 checked disabled> $2</li></ul>')
       .replace(/^\s*[-*+] (.*$)/gm, "<ul><li>$1</li></ul>")
       .replace(/<\/ul>\s*<ul>/g, "")
       .replace(/\n/g, "<br>");
