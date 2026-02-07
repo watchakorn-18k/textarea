@@ -994,10 +994,6 @@
       }
       editor.set(text);
       save();
-      // Update preview if in split view
-      if (isSplitView) {
-        preview.innerHTML = parseMarkdown(text);
-      }
       notify(`Imported: ${file.name}`);
     } catch (err) {
       console.error("Failed to read file:", err);
