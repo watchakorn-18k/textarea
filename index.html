@@ -22,34 +22,65 @@
 
   html {
     color-scheme: light dark;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+
     background-color: #fff;
-    color: #161616;
+    --elevated: #fff;
+    --link: #0066cc;
+    --text: #161616;
+    --outline: #007aff;
 
     @media (prefers-color-scheme: dark) {
       background-color: #000;
-      color: #fff;
+      --elevated: #121212;
+      --link: #58a6ff;
+      --text: #fff;
     }
+  }
+
+  body {
+    color: var(--text);
+  }
+
+  a {
+    color: var(--link);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
   }
 
   article {
     outline: none;
     padding: 18px max(18px, calc(50vw - 400px));
     width: 100%;
-    min-height: 100vh;
+    min-height: 100dvh;
     font: 18px / 1.5 system-ui;
     tab-size: 4;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
     white-space: pre-wrap;
     text-wrap-style: stable;
     overflow-wrap: break-word;
   }
-</style>
-</style>
-</style>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://unpkg.com/zstd-codec@0.1.4/dist/zstd-codec.min.js"></script>
-<style>
+
+  .md-h1, .md-h2, .md-h3, .md-h4, .md-h5, .md-h6 {
+    font-weight: 700;
+  }
+
+  .md-h1 { font-size: 2em; }
+  .md-h2 { font-size: 1.5em; }
+  .md-h3 { font-size: 1.25em; }
+  .md-h4 { font-size: 1.1em; }
+  .md-h5 { font-size: 1em; }
+  .md-h6 { font-size: 0.9em; }
+
+  .md-code { font-family: monospace; }
+  .md-codeblock { font-family: monospace; }
+  .md-bold { font-weight: bold; }
+  .md-strike { text-decoration: line-through; }
+  .md-italic { font-style: italic; }
+  .md-url { cursor: pointer; }
+
+  /* Toolbar */
   #toolbar {
     position: fixed;
     bottom: 20px;
@@ -68,9 +99,7 @@
     transition: opacity 0.2s, transform 0.2s;
     opacity: 0.8;
   }
-  #toolbar:hover {
-    opacity: 1;
-  }
+  #toolbar:hover { opacity: 1; }
   @media (prefers-color-scheme: dark) {
     #toolbar {
       --bg: rgba(40, 40, 40, 0.8);
@@ -99,51 +128,28 @@
     background: var(--hover, rgba(0, 0, 0, 0.05));
   }
   @media (prefers-color-scheme: dark) {
-    #toolbar button:hover {
-      --hover: rgba(255, 255, 255, 0.1);
-    }
+    #toolbar button:hover { --hover: rgba(255, 255, 255, 0.1); }
   }
   #toolbar button.active {
     color: #3b82f6;
     background: var(--active-bg, rgba(59, 130, 246, 0.1));
   }
 
-  /* Search Modal Removed */
-
+  /* Preview */
   #preview {
     display: none;
     outline: none;
     padding: 18px max(18px, calc(50vw - 400px));
     width: 100%;
-    min-height: 100vh;
+    min-height: 100dvh;
     font: 18px / 1.5 system-ui;
     overflow-wrap: break-word;
   }
-
-  /* Markdown Styles for Preview */
-  #preview h1 {
-    font-size: 2em;
-    margin: 0.67em 0;
-    font-weight: bold;
-  }
-  #preview h2 {
-    font-size: 1.5em;
-    margin: 0.75em 0;
-    font-weight: bold;
-  }
-  #preview h3 {
-    font-size: 1.17em;
-    margin: 0.83em 0;
-    font-weight: bold;
-  }
-  #preview p {
-    margin: 1em 0;
-  }
-  #preview ul,
-  #preview ol {
-    padding-left: 2em;
-    margin: 1em 0;
-  }
+  #preview h1 { font-size: 2em; margin: 0.67em 0; font-weight: bold; }
+  #preview h2 { font-size: 1.5em; margin: 0.75em 0; font-weight: bold; }
+  #preview h3 { font-size: 1.17em; margin: 0.83em 0; font-weight: bold; }
+  #preview p { margin: 1em 0; }
+  #preview ul, #preview ol { padding-left: 2em; margin: 1em 0; }
   #preview pre {
     background: #f5f5f5;
     padding: 1em;
@@ -165,80 +171,249 @@
     padding-left: 1em;
     color: #666;
   }
-  #preview a {
-    color: #3b82f6;
-    text-decoration: none;
-  }
-  #preview a:hover {
-    text-decoration: underline;
-  }
-  #preview img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-  }
-  #preview hr {
-    border: 0;
-    border-top: 1px solid #ddd;
-    margin: 2em 0;
+  #preview a { color: #3b82f6; text-decoration: none; }
+  #preview a:hover { text-decoration: underline; }
+  #preview img { max-width: 100%; height: auto; border-radius: 8px; }
+  #preview hr { border: 0; border-top: 1px solid #ddd; margin: 2em 0; }
+  @media (prefers-color-scheme: dark) {
+    #preview pre, #preview code { background: #333; }
+    #preview blockquote { border-color: #444; color: #aaa; }
+    #preview hr { border-color: #444; }
   }
 
+  /* FAB Button */
+  #fab {
+    -webkit-tap-highlight-color: transparent;
+    background-color: #0569fa;
+    border-radius: 50%;
+    border: none;
+    bottom: 15px;
+    right: 15px;
+    box-shadow:
+      0 3px 5px -1px rgba(0, 0, 0, 0.2),
+      0 6px 10px 0 rgba(0, 0, 0, 0.14),
+      0 1px 18px 0 rgba(0, 0, 0, 0.12);
+    color: #fff;
+    cursor: pointer;
+    display: grid;
+    font-weight: 600;
+    width: 46px;
+    height: 46px;
+    outline: none;
+    overflow: hidden;
+    padding: 0;
+    place-items: center;
+    position: fixed;
+    text-decoration: none;
+    touch-action: manipulation;
+    transition: background-color 0.3s ease-out;
+    user-select: none;
+    z-index: 101;
+  }
+  @media (hover) {
+    #fab:hover {
+      color: #fff;
+      background-color: #3c86f3;
+      box-shadow:
+        0 5px 5px -3px rgba(0, 0, 0, 0.2),
+        0 8px 10px 1px rgba(0, 0, 0, 0.14),
+        0 3px 14px 2px rgba(0, 0, 0, 0.12);
+    }
+  }
+  #fab:focus-visible {
+    outline: 2px solid var(--outline);
+    outline-offset: 2px;
+  }
+  span.ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 600ms linear;
+    background-color: rgba(255, 255, 255, 0.7);
+  }
+  @keyframes ripple {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* Menu */
+  #menu {
+    visibility: hidden;
+    transform: scale(0.9) translateY(20px);
+    transition: all 100ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    position: fixed;
+    right: 16px;
+    bottom: 77px;
+    box-shadow:
+      0 19px 38px rgba(0, 0, 0, 0.1),
+      0 15px 12px rgba(0, 0, 0, 0.05);
+    background: var(--elevated);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    z-index: 102;
+  }
+  #menu.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    visibility: visible;
+  }
+  #menu .item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: left;
+    padding: 10px 14px;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    border: none;
+    touch-action: manipulation;
+    font: 16px / 1.5 system-ui;
+    color: var(--text);
+    background: none;
+    width: 100%;
+  }
+  #menu .item:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
   @media (prefers-color-scheme: dark) {
-    #preview pre,
-    #preview code {
-      background: #333;
-    }
-    #preview blockquote {
-      border-color: #444;
-      color: #aaa;
-    }
-    #preview hr {
-      border-color: #444;
-    }
+    #menu .item:hover { background-color: #353535; }
+  }
+  #menu .item:focus-within { outline: 2px solid var(--outline); }
+  #menu .item:first-child {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  #menu .item:last-child {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
+  #menu .item svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  /* Notification */
+  #notification {
+    visibility: hidden;
+    transform: translateY(-30px);
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: 17px;
+    top: 17px;
+    background: #5ad227;
+    color: #fff;
+    border-radius: 30px;
+    font: 18px / 1 system-ui;
+    font-weight: 600;
+    z-index: 103;
+    padding: 10px 20px;
+  }
+  #notification.visible {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+  }
+
+  @media print {
+    .noprint { visibility: hidden !important; }
   }
 </style>
 
-<div id="toolbar">
+<article contenteditable="plaintext-only" spellcheck autofocus></article>
+<div id="preview"></div>
+
+<!-- Toolbar -->
+<div id="toolbar" class="noprint">
   <button onclick="format('**')" title="Bold"><i data-lucide="bold"></i></button>
   <button onclick="format('*')" title="Italic"><i data-lucide="italic"></i></button>
   <button onclick="format('`')" title="Code"><i data-lucide="code"></i></button>
   <button onclick="format('# ')" title="Heading"><i data-lucide="heading"></i></button>
   <button onclick="format('[', '](')" title="Link"><i data-lucide="link"></i></button>
-  <div
-    style="width: 1px; background: currentColor; opacity: 0.2; margin: 4px 2px"
-  ></div>
+  <div style="width: 1px; background: currentColor; opacity: 0.2; margin: 4px 2px"></div>
   <button id="previewBtn" onclick="togglePreview()" title="Preview"><i data-lucide="eye"></i></button>
 </div>
 
-<article contenteditable="plaintext-only" spellcheck></article>
-<div id="preview"></div>
+<!-- FAB Button -->
+<button id="fab" class="noprint">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="1"></circle>
+    <circle cx="12" cy="5" r="1"></circle>
+    <circle cx="12" cy="19" r="1"></circle>
+  </svg>
+</button>
 
+<!-- Menu -->
+<div id="menu" class="noprint" role="menu">
+  <a class="item" href="#new" target="_blank" role="menuitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+    New document
+  </a>
+  <a class="item" id="qr" href="/qr" role="menuitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4"/><path d="M7 17l0 .01"/><path d="M14 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4"/><path d="M7 7l0 .01"/><path d="M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4"/><path d="M17 7l0 .01"/><path d="M14 14l3 0"/><path d="M20 14l0 .01"/><path d="M14 14l0 3"/><path d="M14 20l3 0"/><path d="M17 17l3 0"/><path d="M20 17l0 3"/></svg>
+    Generate QR code
+  </a>
+  <button class="item" id="share-link" role="menuitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 9h-1a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-8a2 2 0 0 0 -2 -2h-1"/><path d="M12 14v-11"/><path d="M9 6l3 -3l3 3"/></svg>
+    Share document
+  </button>
+  <button class="item" id="save-as-html" role="menuitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/></svg>
+    Save as HTML
+  </button>
+  <button class="item" id="save-as-text" role="menuitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/></svg>
+    Save as TEXT
+  </button>
+  <a class="item" href="https://github.com/watchakorn-18k/textarea" target="_blank" role="menuitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"/></svg>
+    GitHub
+  </a>
+</div>
+
+<div id="notification" class="noprint"></div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/zstd-codec@0.1.4/dist/zstd-codec.min.js"></script>
 <script>
   const article = document.querySelector("article");
   const preview = document.getElementById("preview");
   const previewBtn = document.getElementById("previewBtn");
 
+  // Initialize UI
+  initUI();
+
+  // Initialize Editor with syntax highlighting
+  const editor = new Editor(article, parseMarkdownHighlight);
+
+  // Event listeners
   article.addEventListener("input", debounce(500, save));
   article.addEventListener("blur", save);
-  addEventListener("DOMContentLoaded", load);
-  addEventListener("hashchange", load);
-  addEventListener("load", () =>
-    new MutationObserver(save).observe(article, { attributeFilter: ["style"] })
-  );
+  article.addEventListener("click", (event) => {
+    if (event.target.tagName === "A")
+      window.open(event.target.getAttribute("href"), "_blank");
+  });
 
-  // -- Image Handling --
-
+  // Image handling
   article.addEventListener('dragover', e => {
     e.preventDefault();
     e.stopPropagation();
   });
-
   article.addEventListener('drop', e => {
     e.preventDefault();
     e.stopPropagation();
     handleImages(e.dataTransfer.files);
   });
-
   article.addEventListener('paste', e => {
     const files = [];
     if (e.clipboardData && e.clipboardData.items) {
@@ -254,12 +429,44 @@
     }
   });
 
+  addEventListener("DOMContentLoaded", load);
+  addEventListener("hashchange", load);
+  addEventListener("load", () =>
+    new MutationObserver(save).observe(article, { attributeFilter: ["style"] })
+  );
+  addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.code === "KeyS") {
+      e.preventDefault();
+      downloadHTML();
+    }
+  });
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+  }
+
+  console.log(
+    "%cGitHub https://github.com/watchakorn-18k/textarea",
+    "font-size: 16px; border: 1px solid lightblue; border-radius: 12px; padding: 10px 14px;"
+  );
+
+  // -- Zstd Compression --
+  let zstdSimple = null;
+  const zstdInitPromise = new Promise((resolve) => {
+    if (window.ZstdCodec) {
+      ZstdCodec.run(zstd => {
+        zstdSimple = new zstd.Simple();
+        resolve();
+      });
+    } else {
+      resolve();
+    }
+  });
+
+  // -- Image Handling --
   async function handleImages(files) {
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
-      
-      // Show loading/processing indicator if needed (optional)
-      // For now, simple insert
       try {
         const compressedDataUrl = await compressImage(file);
         insertText(`\n![image](${compressedDataUrl})\n`);
@@ -272,17 +479,16 @@
   }
 
   function insertText(text) {
+    if (preview.style.display === 'block') return;
     const sel = window.getSelection();
     if (sel.rangeCount) {
       const range = sel.getRangeAt(0);
       range.deleteContents();
       range.insertNode(document.createTextNode(text));
-      // Move cursor after
       range.collapse(false);
     } else {
       article.textContent += text;
     }
-    // Update preview if active
     if (preview.style.display === 'block') {
       preview.innerHTML = parseMarkdown(article.textContent);
     }
@@ -297,25 +503,18 @@
         img.src = event.target.result;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1024; // Limit width to save hash space
+          const MAX_WIDTH = 1024;
           const scaleSize = MAX_WIDTH / img.width;
-          
           let width = img.width;
           let height = img.height;
-
           if (scaleSize < 1) {
-             width *= scaleSize;
-             height *= scaleSize;
+            width *= scaleSize;
+            height *= scaleSize;
           }
-
           canvas.width = width;
           canvas.height = height;
-
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          
-          // Compress to WebP at 0.7 quality
-          // This mimics Wasm compression efficiency using native browser engine
           const dataUrl = canvas.toDataURL('image/webp', 0.7);
           resolve(dataUrl);
         };
@@ -325,38 +524,9 @@
     });
   }
 
-  addEventListener("keydown", (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-      e.preventDefault();
-      download();
-    }
-  });
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js");
-  }
-
-  console.log(
-    "%cGitHub https://github.com/watchakorn-18k/textarea",
-    "font-size: 16px; border: 1px solid lightblue; border-radius: 12px; padding: 10px 14px; "
-  );
-
-  // -- Zstd Compression --
-  let zstdSimple = null;
-  const zstdInitPromise = new Promise((resolve) => {
-      // Initialize Zstd
-      if (window.ZstdCodec) {
-          ZstdCodec.run(zstd => {
-              zstdSimple = new zstd.Simple();
-              //console.log("Zstd Initialized");
-              resolve();
-          });
-      } else {
-          resolve(); // Fallback if script blocked
-      }
-  });
-
+  // -- Load/Save --
   async function load() {
-    await zstdInitPromise; // Wait for Zstd
+    await zstdInitPromise;
     try {
       if (location.hash !== "") await set(location.hash);
       else {
@@ -386,7 +556,6 @@
   }
 
   async function save() {
-    // Wait for Zstd (though usually loaded by now)
     await zstdInitPromise;
     const hash = await get();
     const currentHash = location.hash;
@@ -410,14 +579,13 @@
   async function set(hash) {
     if (!hash) return;
     const [content, style] = (await decompress(hash.slice(1))).split("\x00");
-    article.textContent = content;
+    editor.set(content);
     if (style) article.setAttribute("style", style);
   }
 
   async function get() {
     const style = article.getAttribute("style");
-    const content =
-      article.textContent + (style !== null ? "\x00" + style : "");
+    const content = article.textContent + (style !== null ? "\x00" + style : "");
     return "#" + (await compress(content));
   }
 
@@ -428,14 +596,10 @@
 
   async function compress(string) {
     const byteArray = new TextEncoder().encode(string);
-    
-    // Zstd Compression
     if (zstdSimple) {
-        const compressed = zstdSimple.compress(byteArray);
-        return new Uint8Array(compressed).toBase64({ alphabet: "base64url" });
+      const compressed = zstdSimple.compress(byteArray);
+      return new Uint8Array(compressed).toBase64({ alphabet: "base64url" });
     }
-    
-    // Fallback Deflate
     const stream = new CompressionStream("deflate-raw");
     const writer = stream.writable.getWriter();
     writer.write(byteArray);
@@ -446,19 +610,14 @@
 
   async function decompress(b64) {
     const byteArray = Uint8Array.fromBase64(b64, { alphabet: "base64url" });
-    
-    // Try Zstd
     if (zstdSimple) {
-        try {
-            const decompressed = zstdSimple.decompress(byteArray);
-            return new TextDecoder().decode(decompressed);
-        } catch (e) {
-            // Not Zstd (Legacy URL or error)
-            // console.warn("Zstd decompression failed, trying raw-deflate", e);
-        }
+      try {
+        const decompressed = zstdSimple.decompress(byteArray);
+        return new TextDecoder().decode(decompressed);
+      } catch (e) {
+        // Not Zstd, try deflate
+      }
     }
-    
-    // Fallback Deflate
     const stream = new DecompressionStream("deflate-raw");
     const writer = stream.writable.getWriter();
     writer.write(byteArray);
@@ -475,10 +634,154 @@
     };
   }
 
-  async function download() {
+  // -- Formatting & Preview --
+  function format(prefix, suffix = prefix) {
+    if (preview.style.display === "block") return;
+    article.focus();
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const text = sel.toString();
+    if (document.queryCommandSupported("insertText")) {
+      let replacement = prefix + text + suffix;
+      document.execCommand("insertText", false, replacement);
+    } else {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(prefix + text + suffix));
+    }
+  }
+
+  function togglePreview(forceState) {
+    const isCurrentlyPreview = preview.style.display === "block";
+    const shouldShowPreview = forceState !== undefined ? forceState : !isCurrentlyPreview;
+
+    if (!shouldShowPreview) {
+      preview.style.display = "none";
+      article.style.display = "block";
+      previewBtn.classList.remove("active");
+      article.focus();
+      const url = new URL(location.href);
+      url.searchParams.delete("view");
+      history.replaceState({}, "", url.toString());
+    } else {
+      const content = article.textContent;
+      preview.innerHTML = parseMarkdown(content);
+      article.style.display = "none";
+      preview.style.display = "block";
+      previewBtn.classList.add("active");
+      const url = new URL(location.href);
+      url.searchParams.set("view", "");
+      history.replaceState({}, "", url.toString());
+    }
+  }
+
+  function parseMarkdown(text) {
+    let html = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+      .replace(/__([^_]+)__/g, "<b>$1</b>")
+      .replace(/\*([^*]+)\*/g, "<i>$1</i>")
+      .replace(/_([^_]+)_/g, "<i>$1</i>")
+      .replace(/~~([^~]+)~~/g, "<del>$1</del>")
+      .replace(/^---+$/gm, "<hr>")
+      .replace(/^# (.*$)/gm, "<h1>$1</h1>")
+      .replace(/^## (.*$)/gm, "<h2>$1</h2>")
+      .replace(/^### (.*$)/gm, "<h3>$1</h3>")
+      .replace(/^> (.*$)/gm, "<blockquote>$1</blockquote>")
+      .replace(/^\s*[-*+] (.*$)/gm, "<ul><li>$1</li></ul>")
+      .replace(/<\/ul>\s*<ul>/g, "")
+      .replace(/\n/g, "<br>");
+    return html;
+  }
+
+  // Syntax highlighting for edit mode
+  function parseMarkdownHighlight(element) {
+    const input = element.textContent;
+    const frag = document.createDocumentFragment();
+
+    const matchers = [
+      { name: "md-codeblock", re: /```[^\n]*\n[\s\S]*?\n```/y },
+      { name: "md-codeblock", re: /~~~[^\n]*\n[\s\S]*?\n~~~/y },
+      { name: "md-h1", re: /^#[ \t]+[^\n]*$/my },
+      { name: "md-h2", re: /^##[ \t]+[^\n]*$/my },
+      { name: "md-h3", re: /^###[ \t]+[^\n]*$/my },
+      { name: "md-h4", re: /^####[ \t]+[^\n]*$/my },
+      { name: "md-h5", re: /^#####[ \t]+[^\n]*$/my },
+      { name: "md-h6", re: /^######[ \t]+[^\n]*$/my },
+      { name: "md-code", re: /`[^`\n]*`/y },
+      { name: "md-bold", re: /\*\*[^*\n]+?\*\*/y },
+      { name: "md-bold", re: /__[^_\n]+?__/y },
+      { name: "md-strike", re: /~~[^~\n]+?~~/y },
+      { name: "md-italic", re: /\*[^*\n]+?\*/y },
+      { name: "md-italic", re: /_[^_\n]+?_/y },
+      { name: "md-url", re: /https?:\/\/[^\s<>()\[\]{}"'`]+/y },
+    ];
+
+    const specials = ["`", "~", "*", "#", "_", "h"];
+
+    let i = 0;
+    while (i < input.length) {
+      let matched = false;
+      for (const m of matchers) {
+        m.re.lastIndex = i;
+        const res = m.re.exec(input);
+        if (res && res.index === i) {
+          const raw = res[0];
+          if (m.name === "md-url") {
+            const a = document.createElement("a");
+            a.className = "md-url";
+            a.href = raw;
+            a.textContent = raw;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            frag.appendChild(a);
+          } else {
+            const span = document.createElement("span");
+            span.className = m.name;
+            span.textContent = raw;
+            frag.appendChild(span);
+          }
+          i += raw.length;
+          matched = true;
+          break;
+        }
+      }
+
+      if (matched) continue;
+
+      let next = input.length;
+      for (const ch of specials) {
+        const idx = input.indexOf(ch, i);
+        if (idx !== -1 && idx < next) next = idx;
+      }
+
+      if (next === i) {
+        frag.appendChild(document.createTextNode(input[i]));
+        i++;
+        continue;
+      }
+
+      frag.appendChild(document.createTextNode(input.slice(i, next)));
+      i = next;
+    }
+
+    element.textContent = "";
+    element.appendChild(frag);
+    element.normalize();
+  }
+
+  // -- Downloads --
+  async function downloadHTML() {
     updateTitle();
     const doc = document.documentElement.cloneNode(true);
     doc.querySelectorAll("script").forEach((s) => s.remove());
+    doc.querySelectorAll(".noprint").forEach((s) => s.remove());
     doc.querySelector("article").removeAttribute("contenteditable");
     const html = "<!DOCTYPE html>\n" + doc.outerHTML;
 
@@ -486,12 +789,7 @@
       try {
         const handle = await showSaveFilePicker({
           suggestedName: document.title + ".html",
-          types: [
-            {
-              description: "HTML file",
-              accept: { "text/html": [".html"] },
-            },
-          ],
+          types: [{ description: "HTML file", accept: { "text/html": [".html"] } }],
         });
         const writable = await handle.createWritable();
         await writable.write(html);
@@ -511,115 +809,390 @@
     URL.revokeObjectURL(url);
   }
 
-  // -- New Features --
+  async function downloadTXT() {
+    updateTitle();
+    const text = article.textContent;
 
-  function format(prefix, suffix = prefix) {
-    if (preview.style.display === "block") return; // Read-only mode
-    article.focus();
-    const sel = window.getSelection();
-    if (!sel.rangeCount) return;
-
-    const text = sel.toString();
-    // Use execCommand insertText to preserve undo history if possible
-    // Note: execCommand is deprecated but still the standard way for contenteditable undo stack support
-    if (document.queryCommandSupported("insertText")) {
-      let replacement = prefix + text + suffix;
-      // Special case for Heading
-      if (prefix.trim() === "#") {
-        // If multiline, might be tricky, just wrap first line?
-        // For simplicity, just insert. Ideally check if we are at start of line
+    if ("showSaveFilePicker" in window) {
+      try {
+        const handle = await showSaveFilePicker({
+          suggestedName: document.title + ".txt",
+          types: [{ description: "TEXT file", accept: { "text/plain": [".txt"] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(text);
+        await writable.close();
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") return;
       }
-      document.execCommand("insertText", false, replacement);
-    } else {
-      // Fallback
-      const range = sel.getRangeAt(0);
-      range.deleteContents();
-      range.insertNode(document.createTextNode(prefix + text + suffix));
     }
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = document.title + ".txt";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
-  function togglePreview(forceState) {
-    const isCurrentlyPreview = preview.style.display === "block";
-    const shouldShowPreview =
-      forceState !== undefined ? forceState : !isCurrentlyPreview;
+  // -- UI --
+  function initUI() {
+    const menu = document.querySelector("#menu");
+    const fab = document.querySelector("#fab");
+    const qr = document.querySelector("#qr");
+    const shareLink = document.querySelector("#share-link");
+    const saveAsHTML = document.querySelector("#save-as-html");
+    const saveAsText = document.querySelector("#save-as-text");
 
-    if (!shouldShowPreview) {
-      // Switch to edit
-      preview.style.display = "none";
-      article.style.display = "block";
-      previewBtn.classList.remove("active");
-      article.focus();
+    fab.addEventListener("click", (event) => {
+      if (event.clientX || event.targetTouches) ripple(event);
+      menu.classList.toggle("visible");
+      qr.setAttribute("href", "/qr" + location.hash);
+    });
 
-      const url = new URL(location.href);
-      url.searchParams.delete("view");
-      history.replaceState({}, "", url.toString());
-    } else {
-      // Switch to preview
-      const content = article.textContent;
-      preview.innerHTML = parseMarkdown(content);
-      article.style.display = "none";
-      preview.style.display = "block";
-      previewBtn.classList.add("active");
-
-      const url = new URL(location.href);
-      url.searchParams.set("view", "");
-      history.replaceState({}, "", url.toString());
+    function hideMenu() {
+      menu.classList.remove("visible");
     }
+
+    function notify(message) {
+      const notification = document.querySelector("#notification");
+      notification.classList.add("visible");
+      notification.textContent = message;
+      setTimeout(() => notification.classList.remove("visible"), 2000);
+    }
+
+    document.body.addEventListener("click", (event) => {
+      let t = event.target;
+      if (t.closest("#menu")) return;
+      if (t.closest("#fab")) return;
+      if (t.closest(".ripple")) return;
+      menu.classList.remove("visible");
+    });
+
+    shareLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (!navigator.clipboard) {
+        alert("Your browser does not support clipboard API");
+        return;
+      }
+      navigator.clipboard.writeText(location.href);
+      notify("Link copied");
+      hideMenu();
+    });
+    saveAsHTML.addEventListener("click", (event) => {
+      event.preventDefault();
+      downloadHTML();
+      hideMenu();
+    });
+    saveAsText.addEventListener("click", (event) => {
+      event.preventDefault();
+      downloadTXT();
+      hideMenu();
+    });
   }
 
-  function parseMarkdown(text) {
-    // Simple markdown parser
-    let html = text
-      // Escape HTML
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
+  function ripple(event) {
+    const button = event.currentTarget;
+    const circle = document.createElement("span");
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${(event.clientX || event.targetTouches[0].pageX) - button.offsetLeft - radius}px`;
+    circle.style.top = `${(event.clientY || event.targetTouches[0].pageY) - button.offsetTop - radius}px`;
+    circle.classList.add("ripple");
+    const rippleEl = button.getElementsByClassName("ripple")[0];
+    if (rippleEl) rippleEl.remove();
+    button.appendChild(circle);
+  }
 
-      // Code blocks (```)
-      .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+  // -- Editor Class --
+  function Editor(element, highlight) {
+    const listeners = [];
+    const history = [];
+    let at = -1, prev;
 
-      // Inline Code (`)
-      .replace(/`([^`]+)`/g, "<code>$1</code>")
+    const debounceHighlight = debounce(30, () => {
+      const pos = save();
+      highlight(element);
+      restore(pos);
+    });
 
-      // Images
-      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
+    const shouldRecord = (event) => {
+      return (
+        !isUndo(event) &&
+        !isRedo(event) &&
+        event.key !== "Meta" &&
+        event.key !== "Control" &&
+        event.key !== "Alt" &&
+        !event.key.startsWith("Arrow")
+      );
+    };
 
-      // Links
-      .replace(
-        /\[([^\]]+)\]\(([^)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener">$1</a>'
+    let recording = false;
+    const debounceRecordHistory = debounce(300, (event) => {
+      if (shouldRecord(event)) {
+        recordHistory();
+        recording = false;
+      }
+    });
+
+    const on = (type, fn) => {
+      listeners.push([type, fn]);
+      element.addEventListener(type, fn);
+    };
+    on("keydown", (event) => {
+      if (event.defaultPrevented) return;
+      prev = toString();
+      if (isUndo(event)) doUndo(event);
+      if (isRedo(event)) doRedo(event);
+      if (shouldRecord(event) && !recording) {
+        recordHistory();
+        recording = true;
+      }
+    });
+    on("keyup", (event) => {
+      if (event.defaultPrevented) return;
+      if (event.isComposing) return;
+      if (prev !== toString()) debounceHighlight();
+      debounceRecordHistory(event);
+    });
+    on("paste", () => setTimeout(recordHistory, 10));
+    on("cut", () => setTimeout(recordHistory, 10));
+    on("beforeinput", (event) => {
+      if (event.inputType === "historyUndo") doUndo(event);
+      if (event.inputType === "historyRedo") doRedo(event);
+    });
+
+    function save() {
+      const s = getSelection();
+      const pos = { start: 0, end: 0, dir: undefined };
+      let { anchorNode, anchorOffset, focusNode, focusOffset } = s;
+      if (!anchorNode || !focusNode) throw "error1";
+      if (anchorNode === element && focusNode === element) {
+        pos.start = anchorOffset > 0 && element.textContent ? element.textContent.length : 0;
+        pos.end = focusOffset > 0 && element.textContent ? element.textContent.length : 0;
+        pos.dir = focusOffset >= anchorOffset ? "->" : "<-";
+        return pos;
+      }
+      if (anchorNode.nodeType === Node.ELEMENT_NODE) {
+        const node = document.createTextNode("");
+        anchorNode.insertBefore(node, anchorNode.childNodes[anchorOffset]);
+        anchorNode = node;
+        anchorOffset = 0;
+      }
+      if (focusNode.nodeType === Node.ELEMENT_NODE) {
+        const node = document.createTextNode("");
+        focusNode.insertBefore(node, focusNode.childNodes[focusOffset]);
+        focusNode = node;
+        focusOffset = 0;
+      }
+      visit(element, (el) => {
+        if (el === anchorNode && el === focusNode) {
+          pos.start += anchorOffset;
+          pos.end += focusOffset;
+          pos.dir = anchorOffset <= focusOffset ? "->" : "<-";
+          return "stop";
+        }
+        if (el === anchorNode) {
+          pos.start += anchorOffset;
+          if (!pos.dir) {
+            pos.dir = "->";
+          } else {
+            return "stop";
+          }
+        } else if (el === focusNode) {
+          pos.end += focusOffset;
+          if (!pos.dir) {
+            pos.dir = "<-";
+          } else {
+            return "stop";
+          }
+        }
+        if (el.nodeType === Node.TEXT_NODE) {
+          if (pos.dir !== "->") pos.start += el.nodeValue.length;
+          if (pos.dir !== "<-") pos.end += el.nodeValue.length;
+        }
+      });
+
+      element.normalize();
+      return pos;
+    }
+
+    function restore(pos) {
+      const s = getSelection();
+      let startNode, startOffset = 0;
+      let endNode, endOffset = 0;
+
+      if (!pos.dir) pos.dir = "->";
+      if (pos.start < 0) pos.start = 0;
+      if (pos.end < 0) pos.end = 0;
+
+      if (pos.dir === "<-") {
+        const { start, end } = pos;
+        pos.start = end;
+        pos.end = start;
+      }
+
+      let current = 0;
+
+      visit(element, (el) => {
+        if (el.nodeType !== Node.TEXT_NODE) return;
+
+        const len = (el.nodeValue || "").length;
+        if (current + len > pos.start) {
+          if (!startNode) {
+            startNode = el;
+            startOffset = pos.start - current;
+          }
+          if (current + len > pos.end) {
+            endNode = el;
+            endOffset = pos.end - current;
+            return "stop";
+          }
+        }
+        current += len;
+      });
+
+      if (!startNode) {
+        startNode = element;
+        startOffset = element.childNodes.length;
+      }
+      if (!endNode) {
+        endNode = element;
+        endOffset = element.childNodes.length;
+      }
+
+      if (pos.dir === "<-") {
+        [startNode, startOffset, endNode, endOffset] = [
+          endNode,
+          endOffset,
+          startNode,
+          startOffset,
+        ];
+      }
+
+      {
+        const startEl = uneditable(startNode);
+        if (startEl) {
+          const node = document.createTextNode("");
+          startEl.parentNode?.insertBefore(node, startEl);
+          startNode = node;
+          startOffset = 0;
+        }
+        const endEl = uneditable(endNode);
+        if (endEl) {
+          const node = document.createTextNode("");
+          endEl.parentNode?.insertBefore(node, endEl);
+          endNode = node;
+          endOffset = 0;
+        }
+      }
+
+      s.setBaseAndExtent(startNode, startOffset, endNode, endOffset);
+      element.normalize();
+    }
+
+    function uneditable(node) {
+      while (node && node !== element) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.getAttribute("contenteditable") === "false") {
+            return node;
+          }
+        }
+        node = node.parentNode;
+      }
+    }
+
+    function doUndo(event) {
+      preventDefault(event);
+      at--;
+      const record = history[at];
+      if (record) {
+        element.innerHTML = record.html;
+        restore(record.pos);
+      }
+      if (at < 0) at = 0;
+    }
+
+    function doRedo(event) {
+      preventDefault(event);
+      at++;
+      const record = history[at];
+      if (record) {
+        element.innerHTML = record.html;
+        restore(record.pos);
+      }
+      if (at >= history.length) at--;
+    }
+
+    function recordHistory() {
+      const html = element.innerHTML;
+      const pos = save();
+      const lastRecord = history[at];
+      if (
+        lastRecord &&
+        lastRecord.html === html &&
+        lastRecord.pos.start === pos.start &&
+        lastRecord.pos.end === pos.end
       )
+        return;
+      at++;
+      history[at] = { html, pos };
+      history.splice(at + 1);
+      const maxHistory = 10000;
+      if (at > maxHistory) {
+        at = maxHistory;
+        history.splice(0, 1);
+      }
+    }
 
-      // Bold
-      .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
-      .replace(/__([^_]+)__/g, "<b>$1</b>")
+    function visit(editor, visitor) {
+      const queue = [];
+      if (editor.firstChild) queue.push(editor.firstChild);
+      let el = queue.pop();
+      while (el) {
+        if (visitor(el) === "stop") break;
+        if (el.nextSibling) queue.push(el.nextSibling);
+        if (el.firstChild) queue.push(el.firstChild);
+        el = queue.pop();
+      }
+    }
 
-      // Italic
-      .replace(/\*([^*]+)\*/g, "<i>$1</i>")
-      .replace(/_([^_]+)_/g, "<i>$1</i>")
+    function isCtrl(event) {
+      return event.metaKey || event.ctrlKey;
+    }
 
-      // Strikethrough
-      .replace(/~~([^~]+)~~/g, "<del>$1</del>")
+    function isUndo(event) {
+      return isCtrl(event) && !event.shiftKey && event.code === "KeyZ";
+    }
 
-      // Horizontal Rule
-      .replace(/^---+$/gm, "<hr>")
+    function isRedo(event) {
+      return isCtrl(event) && event.shiftKey && event.code === "KeyZ";
+    }
 
-      // Headers
-      .replace(/^# (.*$)/gm, "<h1>$1</h1>")
-      .replace(/^## (.*$)/gm, "<h2>$1</h2>")
-      .replace(/^### (.*$)/gm, "<h3>$1</h3>")
+    function toString() {
+      return element.textContent || "";
+    }
 
-      // Blockquotes
-      .replace(/^> (.*$)/gm, "<blockquote>$1</blockquote>")
+    function preventDefault(event) {
+      event.preventDefault();
+    }
 
-      // Unordered Lists
-      .replace(/^\s*[-*+] (.*$)/gm, "<ul><li>$1</li></ul>")
-      // Fix adjacent lists (naive)
-      .replace(/<\/ul>\s*<ul>/g, "")
+    function getSelection() {
+      return element.getRootNode().getSelection();
+    }
 
-      // Line breaks
-      .replace(/\n/g, "<br>");
-
-    return html;
+    return {
+      set(content) {
+        element.textContent = content;
+        highlight(element);
+      },
+      destroy() {
+        for (const [type, fn] of listeners)
+          element.removeEventListener(type, fn);
+      },
+    };
   }
 </script>
