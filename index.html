@@ -381,6 +381,49 @@
     flex-shrink: 0;
   }
 
+  /* Stats Counter */
+  #stats {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: var(--bg, rgba(255, 255, 255, 0.8));
+    backdrop-filter: blur(10px);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font: 13px / 1.4 system-ui;
+    color: var(--text);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border, rgba(0, 0, 0, 0.05));
+    z-index: 99;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    user-select: none;
+  }
+  #stats:hover {
+    opacity: 1;
+  }
+  #stats span {
+    margin-right: 12px;
+  }
+  #stats span:last-child {
+    margin-right: 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    #stats {
+      --bg: rgba(40, 40, 40, 0.8);
+      --border: rgba(255, 255, 255, 0.1);
+    }
+  }
+  @media (max-width: 600px) {
+    #stats {
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+  }
+
   /* Notification */
   #notification {
     visibility: hidden;
@@ -572,6 +615,11 @@
   </a>
 </div>
 
+<div id="stats" class="noprint">
+    <span id="charCount">0 chars</span>
+    <span id="wordCount">0 words</span>
+  </div>
+
 <div id="notification" class="noprint"></div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -588,7 +636,10 @@
   const editor = new Editor(article, parseMarkdownHighlight);
 
   // Event listeners
-  article.addEventListener("input", debounce(500, save));
+  article.addEventListener("input", (e) => {
+    debounce(500, save)();
+    updateStats();
+  });
   article.addEventListener("blur", save);
   article.addEventListener("click", (event) => {
     if (event.target.tagName === "A")
@@ -620,7 +671,10 @@
     }
   });
 
-  addEventListener("DOMContentLoaded", load);
+  addEventListener("DOMContentLoaded", () => {
+    load();
+    updateStats();
+  });
   addEventListener("hashchange", load);
   addEventListener("load", () =>
     new MutationObserver(save).observe(article, { attributeFilter: ["style"] }),
@@ -784,6 +838,17 @@
   function updateTitle() {
     const match = article.textContent.match(/^\n*#(.+)\n/);
     document.title = match?.[1] ?? "Textarea";
+  }
+
+  function updateStats() {
+    const text = article.textContent || "";
+    const charCount = text.length;
+    const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+    
+    document.getElementById("charCount").textContent = 
+      charCount.toLocaleString() + " character" + (charCount !== 1 ? "s" : "");
+    document.getElementById("wordCount").textContent = 
+      wordCount.toLocaleString() + " word" + (wordCount !== 1 ? "s" : "");
   }
 
   async function compress(string) {
